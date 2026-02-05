@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AssignmentEmployee.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260205082833_AddEmployeeUserRelation")]
-    partial class AddEmployeeUserRelation
+    [Migration("20260205151119_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
