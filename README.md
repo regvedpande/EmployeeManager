@@ -1,5 +1,4 @@
 
-````md
 # Employee Management System (EMS)
 
 ## 📌 Project Description
@@ -275,26 +274,4 @@ Built as a **full-stack portfolio project** demonstrating real-world architectur
 
 If you find this project useful, please give it a ⭐ on GitHub.
 
-```
-
----
-
-# 🧠 WHY THIS VERSION IS BETTER
-
-✔ Mermaid **renders perfectly on GitHub**  
-✔ Each diagram has **plain-English explanation**  
-✔ Clear separation of **what happens vs how it works**  
-✔ Interviewer-friendly  
-✔ Beginner-friendly  
-✔ Production-grade documentation
-
----
-
-If you want next:
-- ER diagram (database-focused)
-- API request/response examples
-- Deployment flow (Azure / IIS)
-- Resume-ready explanation
-
-Just tell me 👍
 ```
