@@ -1,53 +1,54 @@
 ﻿using AssignmentEmployee.Api.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer; // 👈 NEW IMPORT
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens; // 👈 NEW IMPORT
+using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database Connection
+// ----------------------------------------------------
+// 1. DATABASE
+// ----------------------------------------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
-// 2. Add Controllers
+// ----------------------------------------------------
+// 2. CONTROLLERS + JSON
+// ----------------------------------------------------
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // 👇 THIS LINE STOPS THE CRASH (Error 500)
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-// 3. 🔐 JWT AUTHENTICATION SETUP (The Fix)
-var jwtKey = "ThisIsMySuperSecretKey1234567890!!"; // ⚠️ Must be at least 32 chars
+// ----------------------------------------------------
+// 3. JWT AUTHENTICATION (HEADER-BASED)
+// ----------------------------------------------------
+var jwtKey = "ThisIsMySuperSecretKey1234567890!!"; // must match AuthController
 var key = Encoding.ASCII.GetBytes(jwtKey);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false
-    };
-});
-// ---------------------------------------------------------
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
-// 4. CORS (Allow Frontend)
+// ----------------------------------------------------
+// 4. CORS
+// ----------------------------------------------------
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
@@ -55,9 +56,46 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ----------------------------------------------------
+// 5. SWAGGER + JWT SUPPORT
+// ----------------------------------------------------
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter: Bearer {your JWT token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// ----------------------------------------------------
+// BUILD APP
+// ----------------------------------------------------
 var app = builder.Build();
 
-// Pipeline
+// ----------------------------------------------------
+// PIPELINE
+// ----------------------------------------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -66,9 +104,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll"); // 👈 Must be before Auth
+app.UseCors("AllowFrontend"); // before auth
 
-app.UseAuthentication(); // 👈 Must be here
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
