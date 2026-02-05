@@ -315,11 +315,3 @@ If this project helped you understand **secure full-stack application design**, 
 
 ---
 
-If you want next, I can:
-
-* Write a **1-page interview walkthrough** (what to demo in 5 minutes)
-* Add **PNG versions** of the diagrams for maximum compatibility
-* Create a **docker-compose** setup (API + SQL Server + Frontend)
-* Harden authentication to **production-grade** standards
-
-Just tell me 👍
