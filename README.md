@@ -1,159 +1,141 @@
+# 🧑‍💼 Employee Management System (EMS)
 
-# Employee Management System (EMS)
+A **production-style full-stack application** built with **ASP.NET Core Web API** and **React + TypeScript**, demonstrating **secure authentication, backend-enforced data isolation, reporting, and real-world CRUD workflows**.
 
-## 📌 Project Description
-
-Employee Management System (EMS) is a **full-stack web application** designed to manage employees within an organization.
-
-It provides:
-- Secure authentication using **JWT**
-- Full **employee CRUD operations**
-- **Report generation** for employee data
-
-The backend is built using **ASP.NET Core Web API**, **Entity Framework Core**, and **SQL Server**, while the frontend uses **React + TypeScript** with **Tailwind CSS** for a modern, responsive UI.
-
-This project follows **real-world enterprise patterns** and is suitable for **learning, assignments, interviews, and portfolio use**.
 
 ---
 
-## 🧭 High-Level System Overview
+## 📌 Project Overview (Recruiter Summary)
 
-This diagram shows how data flows through the system at a high level.
+**Employee Management System (EMS)** allows users to:
+
+* Register & log in securely using **JWT authentication**
+* Manage **their own employees only** (strict backend data isolation)
+* Perform full **CRUD operations** on employees
+* Assign employees to **departments**
+* Track **daily attendance** (present / absent + history)
+* Export employee data as **CSV and PDF**
+* Use a modern, responsive UI with search & pagination
+
+Each user has a **private workspace** — no user can see or modify another user’s data.
+
+---
+
+## 🧭 High-Level Request / Response Flow
 
 ```mermaid
 flowchart LR
-    User["User (Browser)"] --> ReactUI["React Frontend"]
-    ReactUI --> API["ASP.NET Core Web API"]
-    API --> DB["SQL Server (EF Core)"]
-    DB --> API
-    API --> ReactUI
-````
+  U["User (Browser)"]
+  FE["React Frontend"]
+  API["ASP.NET Core API"]
+  AUTH["JWT Validation"]
+  DB["SQL Server"]
 
-### Explanation
+  U --> FE
+  FE --> API
+  API --> AUTH
+  API --> DB
+  DB --> API
+  API --> FE
+```
 
-1. The **user** interacts with the React frontend.
-2. React sends HTTP requests to the backend API.
-3. The API uses **EF Core** to read/write data from SQL Server.
-4. Responses (JSON / JWT) flow back to the UI.
+### What this shows
+
+1. The user interacts with the **React UI**
+2. The frontend sends API requests with a **JWT token**
+3. The backend validates the token and extracts the **UserId**
+4. Data is read/written via **Entity Framework Core**
+5. Responses (JSON / CSV / PDF) return to the UI
 
 ---
 
-## 🏗️ Architecture Overview
-
-This shows how frontend and backend responsibilities are separated.
+## 🏗 Architecture & Responsibilities
 
 ```mermaid
 flowchart TB
-    subgraph Frontend
-        React["React + TypeScript"]
-        Axios["Axios (JWT Interceptor)"]
-        Tailwind["Tailwind CSS"]
-    end
+  subgraph Frontend
+    F1["React + TypeScript"]
+    F2["Axios (api.ts) – JWT Interceptor"]
+    F3["Tailwind UI & Components"]
+  end
 
-    subgraph Backend
-        API["ASP.NET Core Web API"]
-        Auth["JWT Authentication"]
-        EF["Entity Framework Core"]
-    end
+  subgraph Backend
+    B1["ASP.NET Core Web API"]
+    B2["Controllers (Auth, Employees, Attendance, Reports)"]
+    B3["JWT Service"]
+    B4["PDF Generator (PdfSharpCore)"]
+    B5["EF Core (ApplicationDbContext)"]
+  end
 
-    DB["SQL Server"]
+  DB["SQL Server"]
 
-    React --> Axios
-    Axios --> API
-    API --> Auth
-    API --> EF
-    EF --> DB
+  F1 --> F2
+  F2 --> B1
+
+  B1 --> B3
+  B1 --> B2
+
+  B2 --> B5
+  B5 --> DB
+
+  B2 --> B4
+
+  B1 --> F1
 ```
 
-### Explanation
+### Clear separation of concerns
 
-* **Frontend** handles UI and user interaction
-* **Axios interceptor** automatically attaches JWT token
-* **Backend API** validates token and processes requests
-* **EF Core** maps C# models to database tables
+#### Frontend (React)
+
+* UI rendering & user experience
+* Form handling and validation
+* Search & pagination
+* Secure file downloads (CSV / PDF)
+* Route protection (private routes)
+
+#### Axios Layer
+
+* Centralized HTTP client
+* Automatically attaches `Authorization: Bearer <token>`
+* Handles binary responses (`blob`) for reports
+
+#### Backend (ASP.NET Core)
+
+* Authentication & authorization
+* **User ownership enforcement**
+* Business rules & validation
+* Report generation (CSV / PDF)
+
+#### Database
+
+* SQL Server via EF Core
+* Strong relational model with foreign keys
 
 ---
 
-## 🔐 Authentication Flow (JWT)
+## 🔐 Authentication & Data Isolation (Critical Design)
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as React Frontend
-    participant B as ASP.NET API
-    participant D as Database
+### How authentication works
 
-    U->>F: Enter email & password
-    F->>B: Login request
-    B->>D: Validate credentials
-    D-->>B: User exists
-    B-->>F: JWT token
-    F->>F: Store token
-    F->>B: Authorized API calls
-```
-
-### Explanation
-
-1. User logs in via the UI
+1. User logs in via `/api/auth/login`
 2. Backend validates credentials
-3. Backend returns a **JWT token**
-4. Token is stored in browser
-5. Token is sent with every secured request
+3. Backend issues a **JWT token** containing the user ID
+4. Frontend stores token and attaches it to every request
+
+### How data isolation is enforced
+
+* Every `Employee` record includes `UserId`
+* `UserId` is extracted from the JWT on the backend
+* All queries are filtered by `UserId`
 
 ---
 
-## 👥 Employee Management Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as React UI
-    participant B as Employees API
-    participant D as Database
-
-    U->>F: Add / Edit employee
-    F->>B: Create or Update request
-    B->>D: Save employee
-    D-->>B: Success
-    B-->>F: Updated employee list
-```
-
-### Explanation
-
-* Same UI handles **Add** and **Edit**
-* Backend decides action based on HTTP method
-* Updated data is immediately reflected in UI
-
----
-
-## 📊 Report Generation Flow
-
-```mermaid
-flowchart LR
-    User["User"] --> Click["Click Download Report"]
-    Click --> API["Reports API"]
-    API --> DB["SQL Server"]
-    DB --> API
-    API --> CSV["Generated CSV File"]
-    CSV --> User
-```
-
-### Explanation
-
-1. User clicks **Download Report**
-2. Frontend calls Reports API
-3. Backend fetches employee data
-4. Data is converted to CSV
-5. Browser downloads the file
-
----
-
-## 🚀 Features
+## 👥 Core Features
 
 ### 🔐 Authentication
 
-* User registration & login
-* JWT-based security
+* User registration
+* Secure login with JWT
 * Protected API endpoints
 
 ### 👥 Employee Management
@@ -161,75 +143,101 @@ flowchart LR
 * Add employee
 * Edit employee
 * Delete employee
-* Assign departments
-* View employee list
+* Assign department
+* User-specific dashboard
+
+### 📋 Table List (Advanced View)
+
+* Dedicated table page
+* Search by name/email
+* Client-side pagination
+* Edit & delete actions
+
+### 🕒 Attendance Tracking
+
+* Mark present / absent
+* One record per employee per day (upsert logic)
+* View attendance history
 
 ### 📊 Reports
 
-* Export employees as CSV
-* Includes department & salary
-
-### 🎨 UI / UX
-
-* Responsive design
-* Tailwind CSS
-* Clean forms & layouts
+* Export employees as **CSV** (Excel-friendly)
+* Export employees as **PDF** (server-generated)
+* User-specific data only
 
 ---
 
-## 🛠️ Tech Stack
+## 📡 API Endpoints (Complete)
 
-### Backend
+> All endpoints below require
+> `Authorization: Bearer <JWT>` (except register/login)
 
-* ASP.NET Core Web API
-* Entity Framework Core
-* SQL Server
-* JWT Authentication
-* Swagger
+### Auth
 
-### Frontend
+* `POST /api/auth/register`
+* `POST /api/auth/login`
+* `GET /api/auth/me`
 
-* React (TypeScript)
-* Vite
-* Tailwind CSS
-* Axios
-* React Router
+### Employees
+
+* `GET /api/employees`
+* `GET /api/employees/{id}`
+* `POST /api/employees`
+* `PUT /api/employees/{id}`
+* `DELETE /api/employees/{id}`
+
+### Departments
+
+* `GET /api/departments`
+
+### Attendance
+
+* `POST /api/attendance`
+* `GET /api/attendance/{employeeId}`
+
+### Reports
+
+* `GET /api/reports/employees/csv`
+* `GET /api/reports/employees/pdf`
 
 ---
 
 ## 🧱 Database Design
 
-### Employee
-
-* Id
-* FullName
-* Email
-* Salary
-* DepartmentId
-
-### Department
-
-* Id
-* Name
-
-### User
+### Users
 
 * Id
 * Email
 * PasswordHash
 * Role
 
-Departments are seeded automatically:
+### Employees
 
-* HR
-* Engineering
-* Sales
+* Id
+* FullName
+* Email
+* Salary
+* DepartmentId
+* **UserId (FK → Users)**
+
+### Departments
+
+* Id
+* Name
+  *(Seeded: HR, Engineering, Sales)*
+
+### Attendance
+
+* Id
+* EmployeeId
+* Date
+* Present
 
 ---
 
 ## ▶️ How to Run the Project
 
-### Backend
+### Backend (ASP.NET Core)
 
 ```bash
 dotnet restore
@@ -237,41 +245,67 @@ dotnet ef database update
 dotnet run
 ```
 
-### Frontend
+* API: `https://localhost:7121`
+* Swagger: `https://localhost:7121/swagger`
+
+---
+
+### Frontend (React + Vite)
 
 ```bash
 npm install
 npm run dev
 ```
 
----
-
-## 🧠 EF Core Notes
-
-* EF Core handles database access
-* Migrations are required only when models change
-* Feature additions do not require schema changes
+* Frontend: `http://localhost:5173`
 
 ---
 
-## 🔮 Future Enhancements
+## 🛠 Important Technical Notes
 
-* Attendance tracking
-* Role-based access
-* PDF reports
-* Analytics dashboard
-* Search & pagination
+* PDF generation uses **PdfSharpCore**
+* CSV & PDF downloads are handled using `responseType: 'blob'`
+* Axios interceptor is fully typed (no `any`)
+* React hooks follow strict lint rules (no invalid effects)
+* Salary uses numeric input handling
+* Department dropdown is correctly populated during edit
+
+---
+
+## 🚀 Production Readiness (What to Improve)
+
+* Hash passwords (BCrypt / ASP.NET Identity)
+* Store JWT secret in environment variables
+* Use HttpOnly cookies instead of localStorage
+* Add server-side pagination
+* Add role-based access (Admin/User)
+* Add CI/CD pipeline
+* Add audit logs & monitoring
+
+---
+
+## 🧠 How to Explain This Project in Interviews
+
+You can confidently explain:
+
+* JWT authentication end-to-end
+* Backend-enforced multi-tenancy
+* Why PDF generation belongs on the server
+* How frontend securely downloads binary files
+* How EF Core enforces ownership constraints
+* Tradeoffs and production improvements
 
 ---
 
 ## 👨‍💻 Author
 
-Built as a **full-stack portfolio project** demonstrating real-world architecture, security, and UI best practices.
+Built as a **full-stack portfolio project** to demonstrate real-world system design, security, and clean architecture using modern web technologies.
 
 ---
 
 ## ⭐ Support
 
-If you find this project useful, please give it a ⭐ on GitHub.
+If this project helped you understand **secure full-stack application design**, please consider giving it a ⭐ on GitHub.
 
-```
+---
+
