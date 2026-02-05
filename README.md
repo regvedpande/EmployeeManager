@@ -272,28 +272,7 @@ npm run dev
 
 ---
 
-## 🚀 Production Readiness (What to Improve)
 
-* Hash passwords (BCrypt / ASP.NET Identity)
-* Store JWT secret in environment variables
-* Use HttpOnly cookies instead of localStorage
-* Add server-side pagination
-* Add role-based access (Admin/User)
-* Add CI/CD pipeline
-* Add audit logs & monitoring
-
----
-
-## 🧠 How to Explain This Project in Interviews
-
-You can confidently explain:
-
-* JWT authentication end-to-end
-* Backend-enforced multi-tenancy
-* Why PDF generation belongs on the server
-* How frontend securely downloads binary files
-* How EF Core enforces ownership constraints
-* Tradeoffs and production improvements
 
 ---
 
