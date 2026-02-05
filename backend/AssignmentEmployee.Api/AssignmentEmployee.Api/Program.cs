@@ -27,7 +27,7 @@ builder.Services.AddControllers()
 // ----------------------------------------------------
 // 3. JWT AUTHENTICATION (HEADER-BASED)
 // ----------------------------------------------------
-var jwtKey = "ThisIsMySuperSecretKey1234567890!!"; // must match AuthController
+var jwtKey = "ThisIsMySuperSecretKey1234567890!!"; 
 var key = Encoding.ASCII.GetBytes(jwtKey);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

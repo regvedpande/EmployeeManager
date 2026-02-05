@@ -2,12 +2,15 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
-const Navbar = () => {
-  const { logout } = useContext(AuthContext)!;
+const Navbar: React.FC = () => {
+  const auth = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
+    // AuthContext.logout already redirects via window.location.href in your code.
+    // We'll call logout and then navigate as a safe fallback (no harm).
+    auth?.logout();
+    // If logout already changed location, this won't do anything bad.
     navigate("/login");
   };
 

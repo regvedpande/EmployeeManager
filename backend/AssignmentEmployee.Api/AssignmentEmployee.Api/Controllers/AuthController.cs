@@ -14,13 +14,14 @@ namespace AssignmentEmployee.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private const string JwtKey = "ThisIsMySuperSecretKey1234567890!!";
 
         public AuthController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // ✅ REGISTER
+        // ---------------- REGISTER ----------------
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest request)
         {
@@ -30,17 +31,17 @@ namespace AssignmentEmployee.Api.Controllers
             var user = new User
             {
                 Email = request.Email,
-                PasswordHash = request.Password, // ⚠️ plaintext ONLY for demo
+                PasswordHash = request.Password, // (Plain for assignment)
                 Role = "User"
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new { message = "Registration successful" });
         }
 
-        // ✅ LOGIN (RETURNS JWT TOKEN)
+        // ---------------- LOGIN ----------------
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
@@ -52,39 +53,53 @@ namespace AssignmentEmployee.Api.Controllers
             if (user == null)
                 return Unauthorized("Invalid credentials");
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("ThisIsMySuperSecretKey1234567890!!");
-
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var claims = new[]
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim("id", user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email)
-                }),
-                Expires = DateTime.UtcNow.AddHours(2),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature)
+                new Claim("id", user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role)
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
+            var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JwtKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            return Ok(new { token = tokenString });
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(7),
+                signingCredentials: creds
+            );
+
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                email = user.Email,
+                role = user.Role
+            });
+        }
+
+        // ---------------- CURRENT USER ----------------
+        [HttpGet("me")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public IActionResult Me()
+        {
+            return Ok(new
+            {
+                userId = User.FindFirst("id")?.Value,
+                email = User.FindFirst(ClaimTypes.Email)?.Value,
+                role = User.FindFirst(ClaimTypes.Role)?.Value
+            });
         }
     }
 
-    // 🔽 DTOs
     public class RegisterRequest
     {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
     }
 
     public class LoginRequest
     {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
     }
 }

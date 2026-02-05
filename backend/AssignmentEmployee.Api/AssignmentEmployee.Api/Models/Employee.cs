@@ -1,17 +1,27 @@
-﻿using AssignmentEmployee.Api.Models;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-public class Employee
+namespace AssignmentEmployee.Api.Models
 {
-    public int Id { get; set; }
+    public class Employee
+    {
+        [Key]
+        public int Id { get; set; }
 
-    public string FullName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public decimal Salary { get; set; }
+        [Required]
+        public string FullName { get; set; } = string.Empty;
 
-    public int DepartmentId { get; set; }
-    public Department? Department { get; set; }
+        [Required]
+        public string Email { get; set; } = string.Empty;
 
-    // 🔐 Ownership
-    public int UserId { get; set; }
-    public User User { get; set; } = null!;
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Salary { get; set; }
+
+        public int DepartmentId { get; set; }
+        public Department? Department { get; set; }
+
+        // 🔥 IMPORTANT
+        public int UserId { get; set; }
+        public User? User { get; set; }
+    }
 }

@@ -1,4 +1,4 @@
-import { createContext, useState, type ReactNode } from "react";
+import React, { createContext, useState } from "react";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -9,10 +9,14 @@ interface AuthContextType {
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return !!localStorage.getItem("token");
-  });
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    () => Boolean(localStorage.getItem("token"))
+  );
 
   const login = (token: string) => {
     localStorage.setItem("token", token);
@@ -30,4 +34,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
