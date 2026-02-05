@@ -2,8 +2,6 @@
 
 A **production-style full-stack application** built with **ASP.NET Core Web API** and **React + TypeScript**, demonstrating **secure authentication, backend-enforced data isolation, reporting, and real-world CRUD workflows**.
 
-This is **not a basic CRUD demo**.
-It intentionally showcases how real systems are designed, secured, and structured.
 
 ---
 
@@ -129,10 +127,6 @@ flowchart TB
 * Every `Employee` record includes `UserId`
 * `UserId` is extracted from the JWT on the backend
 * All queries are filtered by `UserId`
-
-> ⚠️ **Important:**
-> This isolation is enforced **on the backend**, not the frontend.
-> Even if someone manipulates frontend code, they **cannot** access other users’ data.
 
 ---
 
